@@ -41,7 +41,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 const User = mongoose.model("UserRecord", userSchema);
 // En server/server.js
-const cors = require('cors');
+
 
 // Configura CORS para permitir peticiones desde tu frontend
 app.use(cors({
