@@ -45,7 +45,7 @@ const User = mongoose.model("UserRecord", userSchema);
 
 // Configura CORS para permitir peticiones desde tu frontend
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://tu-frontend-url.onrender.com',
+  origin: process.env.FRONTEND_URL || 'https://task-managerrepo.onrender.com',
   credentials: true
 }));
 // Definir esquema y modelo para Grupos
