@@ -1074,6 +1074,46 @@ app.put("/api/tasks/:taskId", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Error al actualizar el estado de la tarea" });
   }
 });
+// Ruta para que los estudiantes actualicen el estado de sus tareas asignadas
+app.post("/api/tasks/:taskId/updateStatus", verifyToken, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { status } = req.body;
+    
+    // Verificar que el usuario sea estudiante
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: "Esta ruta es solo para estudiantes" });
+    }
+    
+    // Verificar que la tarea existe y está asignada al estudiante
+    const task = await Task.findOne({ 
+      _id: taskId,
+      assigned_to: req.user.userId
+    });
+    
+    if (!task) {
+      return res.status(404).json({ message: "Tarea no encontrada o no asignada a ti" });
+    }
+    
+    // Validar que el estado sea uno de los estados permitidos
+    const validStatuses = ['In Progress', 'Done', 'Paused', 'Revision'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Estado no válido" });
+    }
+    
+    // Actualizar el estado de la tarea
+    task.status = status;
+    await task.save();
+    
+    res.json({ 
+      message: "Estado de tarea actualizado correctamente", 
+      task 
+    });
+  } catch (error) {
+    console.error("Error al actualizar el estado de la tarea:", error);
+    res.status(500).json({ message: "Error al actualizar el estado de la tarea" });
+  }
+});
 
 // Iniciar servidor
 const PORT = process.env.PORT || 5000;
