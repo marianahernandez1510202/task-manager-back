@@ -1033,6 +1033,47 @@ app.post("/api/tasks/:taskId/complete", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Error al marcar la tarea como completada" });
   }
 });
+// Agregar esta nueva ruta para permitir que los estudiantes actualicen el estado de sus tareas
+app.put("/api/tasks/:taskId", verifyToken, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { status } = req.body;
+    
+    // Verificar que la tarea existe
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Tarea no encontrada" });
+    }
+    
+    // Si el usuario es estudiante, verificar que la tarea le está asignada
+    if (req.user.role === 'student') {
+      const isAssigned = task.assigned_to.some(id => id.toString() === req.user.userId);
+      if (!isAssigned) {
+        return res.status(403).json({ message: "No tienes permiso para modificar esta tarea" });
+      }
+    } 
+    // Si es superadmin, verificar que la tarea pertenece a un grupo creado por él
+    else if (req.user.role === 'superadmin') {
+      const group = await Group.findOne({ 
+        _id: task.group_id, 
+        created_by: req.user.userId
+      });
+      
+      if (!group) {
+        return res.status(403).json({ message: "No tienes permiso para modificar esta tarea" });
+      }
+    }
+    
+    // Actualizar el estado de la tarea
+    task.status = status;
+    await task.save();
+    
+    res.json({ message: "Estado de tarea actualizado correctamente", task });
+  } catch (error) {
+    console.error("Error al actualizar el estado de la tarea:", error);
+    res.status(500).json({ message: "Error al actualizar el estado de la tarea" });
+  }
+});
 
 // Iniciar servidor
 const PORT = process.env.PORT || 5000;
